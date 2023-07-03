@@ -515,6 +515,7 @@ class SSIS_ver2(tk.Tk):
     def delete_item(self, toplevel):
         confirm = False
         if self.entity == self.course:
+            # Shows extra warning for when there are currently enrolled students in the to-be-deleted course
             self.cursor.execute('SELECT * FROM student_ver2 WHERE course_key = %s', (self.code_var.get(),))
             studentsInCourse = self.cursor.fetchall()
             if len(studentsInCourse) > 0:
