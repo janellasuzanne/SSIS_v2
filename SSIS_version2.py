@@ -6,9 +6,9 @@ from tkinter.messagebox import showerror, showwarning, showinfo
 import mysql.connector
 from mysql.connector import Error
 
-from init_queries import *
+from init_queries_version2 import *
 
-class SSIS_v2(tk.Tk):
+class SSIS_ver2(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Simple Student Information System v2')
@@ -19,19 +19,20 @@ class SSIS_v2(tk.Tk):
             host='localhost',
             user='root',
             password='password',
-            database='ssis_v2'
+            database='version2'
         )
         self.cursor = self.db.cursor()
 
+        # create database
+        self.execute_query(self.db, create_database_query)
+
         # create tables
-        self.execute_query(self.db, create_college_table)
-        self.execute_query(self.db, create_course_table)
-        self.execute_query(self.db, create_student_table)
+        self.execute_query(self.db, create_course_ver2_table_query)
+        self.execute_query(self.db, create_student_ver2_table_query)
 
         # populate tables
-        self.execute_query(self.db, populate_college)
-        self.execute_query(self.db, populate_course)
-        self.execute_query(self.db, populate_student)
+        self.execute_query(self.db, populate_coursesv2)
+        self.execute_query(self.db, populate_studentsv2)
 
         self.db.commit()
 
@@ -39,7 +40,6 @@ class SSIS_v2(tk.Tk):
         self.student = 'STUDENT'
         self.course = 'COURSE'
 
-        self.college_var = tk.StringVar(value='Select College')
         self.code_var = tk.StringVar(value='Enter Course Code')
         self.desc_var = tk.StringVar(value='Enter Course Description')
         self.id_var = tk.StringVar(value='Enter ID Number')
@@ -58,8 +58,10 @@ class SSIS_v2(tk.Tk):
         self.entity = ''
 
         # entities elements
-        self.student_button = tk.Button(self.entities_frame, text=self.student, width=25, command=lambda: self.refresh_list(self.student))
-        self.course_button = tk.Button(self.entities_frame, text=self.course, width=25, command=lambda: self.refresh_list(self.course))
+        self.student_button = tk.Button(self.entities_frame, text=self.student, width=25, command=lambda: self.refresh_list(self.student)
+        )
+        self.course_button = tk.Button(self.entities_frame, text=self.course, width=25, command=lambda: self.refresh_list(self.course)
+        )
 
         # search elements
         self.search_combobox = ttk.Combobox(
@@ -73,13 +75,15 @@ class SSIS_v2(tk.Tk):
             width=80)
 
         # show_list button
-        self.show_list = tk.Button(self, text='Show List', command=lambda: self.refresh_list(self.entity))
+        self.show_list = tk.Button(self, text='Show List', command=lambda: self.refresh_list(self.entity)
+        )
 
         self.treeview = ttk.Treeview(self, show='headings')
         self.treeview.bind('<Double-Button-1>', self.get_info)
 
         # add button
-        self.add = tk.Button(self, text='Add', relief='raised', command=lambda: self.create(self.entity))
+        self.add = tk.Button(self, text='Add', relief='raised', command=lambda: self.create(self.entity)
+        )
 
     # LAYOUT
         # frames
@@ -104,15 +108,14 @@ class SSIS_v2(tk.Tk):
         self.add.pack(fill='x', padx=10, pady=10)
 
         self.mainloop()
-
+    
     def execute_query(self, connection, query):
         self.cursor = connection.cursor()
         try:
             self.cursor.execute(query)
             connection.commit()
-            print('Query Successful!')
+            print('Query Successful')
         except Error as err:
-            # print(f'Error: {err}')
             return
 
 # L - LIST
@@ -135,21 +138,19 @@ class SSIS_v2(tk.Tk):
             self.treeview.heading("Year Level", text="Year Level")
 
             if self.search_var.get() == 'All':
-                self.cursor.execute('SELECT * FROM student_v2')
+                self.cursor.execute('SELECT * FROM student_ver2')
             elif self.search_var.get() == 'ID':
-                self.cursor.execute('SELECT * FROM student_v2 WHERE student_id = %s', (self.search_entry_var.get(),))
+                self.cursor.execute('SELECT * FROM student_ver2 WHERE id = %s', (self.search_entry_var.get(),))
             elif self.search_var.get() == 'Last Name':
-                self.cursor.execute('SELECT * FROM student_v2 WHERE  last_name= %s', (self.search_entry_var.get(),))
+                self.cursor.execute('SELECT * FROM student_ver2 WHERE  last_name= %s', (self.search_entry_var.get(),))
             elif self.search_var.get() == 'Course':
-                self.cursor.execute('SELECT * FROM student_v2 WHERE  course_key= %s', (self.search_entry_var.get(),))
-            elif self.search_var.get() == 'College':
-                self.cursor.execute('SELECT * FROM student_v2 WHERE  college_key= %s', (self.search_entry_var.get(),))
+                self.cursor.execute('SELECT * FROM student_ver2 WHERE  course_key= %s', (self.search_entry_var.get(),))
             else:
-                self.cursor.execute('SELECT * FROM student_v2')
+                self.cursor.execute('SELECT * FROM student_ver2')
             
             students = self.cursor.fetchall()
             for student in students:
-                self.treeview.insert('', tk.END, values=(student[0], f'{student[1]} {student[2]}', student[6], student[3]))
+                self.treeview.insert('', tk.END, values=(student[0], f'{student[1]} {student[2]}', student[5], student[3]))
         else:
             self.treeview['columns'] = ('Code', 'Desc')
             self.treeview.column("Code", width=5)
@@ -159,13 +160,11 @@ class SSIS_v2(tk.Tk):
             self.treeview.heading("Desc", text="Course Description")
 
             if self.search_var.get() == 'All':
-                self.cursor.execute('SELECT * FROM course_v2')
+                self.cursor.execute('SELECT * FROM course_ver2')
             elif self.search_var.get() == 'Course Code':
-                self.cursor.execute('SELECT * FROM course_v2 WHERE  course_code= %s', (self.search_entry_var.get(),))
-            elif self.search_var.get() == 'College':
-                self.cursor.execute('SELECT * FROM course_v2 WHERE  college_key= %s', (self.search_entry_var.get(),))
+                self.cursor.execute('SELECT * FROM course_ver2 WHERE  code= %s', (self.search_entry_var.get(),))
             else:
-                self.cursor.execute('SELECT * FROM course_v2')
+                self.cursor.execute('SELECT * FROM course_ver2')
 
             courses = self.cursor.fetchall()
             for course in courses:
@@ -176,9 +175,9 @@ class SSIS_v2(tk.Tk):
     # Function to update the search filters
     def search_combo_update(self):
         if self.entity == self.student:
-            self.search_combobox['values'] = ('All', 'ID', 'Last Name', 'Course', 'College')
+            self.search_combobox['values'] = ('All', 'ID', 'Last Name', 'Course')
         elif self.entity == self.course:
-            self.search_combobox['values'] = ('All', 'Course Code', 'College')
+            self.search_combobox['values'] = ('All', 'Course Code')
 
 # C - CREATE
     def create(self, entity):
@@ -189,7 +188,7 @@ class SSIS_v2(tk.Tk):
         self.create_toplevel.resizable(False, False)
         self.create_toplevel.bind('<Control-KeyPress-w>', lambda event: self.create_toplevel.destroy())
         
-        # WIDGETS
+    # WIDGETS
         # frames 
         self.info_field = tk.LabelFrame(self.create_toplevel, relief='sunken')
         self.labels_frame = tk.Frame(self.info_field)
@@ -216,19 +215,10 @@ class SSIS_v2(tk.Tk):
         if entity == self.course:
         # WIDGETS
             # labels
-            self.college_label = tk.Label(self.labels_frame, text='COLLEGE:')
             self.code_label = tk.Label(self.labels_frame, text='COURSE CODE:')
             self.desc_label = tk.Label(self.labels_frame, text='COURSE DESCRIPTION:')
 
             # entries
-            self.college_combobox = ttk.Combobox(
-                self.entries_frame,
-                textvariable=self.college_var,
-                width=45,
-                state='readonly')
-            self.cursor.execute('SELECT college_code FROM college_v2')
-            self.college_combobox['values'] = self.cursor.fetchall()
-
             self.code_entry = tk.Entry(
                 self.entries_frame,
                 textvariable=self.code_var,
@@ -240,19 +230,16 @@ class SSIS_v2(tk.Tk):
 
         # LAYOUT
             # labels
-            self.college_label.pack(anchor='w', pady=2)
             self.code_label.pack(anchor='w', pady=2)
             self.desc_label.pack(anchor='w', pady=2)
             
             # entries
-            self.college_combobox.pack(pady=2)
             self.code_entry.pack(pady=2)
             self.desc_entry.pack(pady=2)
                 
         if entity == self.student:
         # WIDGETS
             # labels
-            self.college_label = tk.Label(self.labels_frame, text='COLLEGE:')
             self.student_id_label = tk.Label(self.labels_frame, text='STUDENT ID:')
             self.first_name_label = tk.Label(self.labels_frame, text='FIRST NAME:')
             self.last_name_label = tk.Label(self.labels_frame, text='LAST NAME:')
@@ -261,16 +248,6 @@ class SSIS_v2(tk.Tk):
             self.gender = tk.Label(self.labels_frame, text='GENDER:')
 
             # entries
-            self.college_combobox = ttk.Combobox(
-                self.entries_frame,
-                textvariable=self.college_var,
-                width=45,
-                state='readonly')
-            self.cursor.execute('SELECT college_code FROM college_v2')
-            self.college_combobox['values'] = self.cursor.fetchall()
-            # Bind event to populate course combobox based on the selected college
-            self.college_combobox.bind("<<ComboboxSelected>>", lambda event: self.populate_course_combobox())
-
             self.student_id_entry = tk.Entry(
                 self.entries_frame, 
                 textvariable=self.id_var,
@@ -291,6 +268,8 @@ class SSIS_v2(tk.Tk):
                 textvariable=self.code_var,
                 width=45,
                 state='readonly')
+            self.cursor.execute('SELECT code FROM course_ver2')
+            self.course_combobox['values'] = self.cursor.fetchall()
 
             self.year_level_combobox = ttk.Combobox(
                 self.entries_frame, 
@@ -308,7 +287,6 @@ class SSIS_v2(tk.Tk):
             
         # LAYOUT
             # labels
-            self.college_label.pack(anchor='w', pady=2)
             self.student_id_label.pack(anchor='w', pady=2)
             self.first_name_label.pack(anchor='w', pady=2)
             self.last_name_label.pack(anchor='w', pady=2)
@@ -317,7 +295,6 @@ class SSIS_v2(tk.Tk):
             self.gender.pack(anchor='w', pady=2)
 
             # entries
-            self.college_combobox.pack(pady=2)
             self.student_id_entry.pack(pady=2)
             self.first_name_entry.pack(pady=2)
             self.last_name_entry.pack(pady=2)
@@ -325,41 +302,36 @@ class SSIS_v2(tk.Tk):
             self.year_level_combobox.pack(pady=2)
             self.gender_combobox.pack(pady=2)
 
-    # Function to update the course_combobox depending on the selected college
-    def populate_course_combobox(self):
-        selected_college = self.college_var.get()
-
-        self.cursor.execute('SELECT course_code FROM course_v2 WHERE college_key = %s', (selected_college,))
-        courses = self.cursor.fetchall()
-
-        self.course_combobox['values'] = courses
-
     # Function to execute the submission for the creation of item  
     def submit_item(self):
-        if self.entity == self.course:
-            answer = messagebox.showinfo(
-                "Registration Information",
-                f"COLLEGE:\t\t{self.college_var.get()}\n\nCOURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}"
-            )
-            query = 'INSERT INTO course_v2 (course_code, course_name, college_key) VALUES (%s, %s, %s)'
-            values = (self.code_var.get(), self.desc_var.get(), self.college_var.get(),)
-            self.cursor.execute(query, values)
-            self.db.commit()
+        try:
+            if self.entity == self.course:
+                answer = messagebox.showinfo(
+                    "Registration Information",
+                    f"COURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}"
+                )
+                query = 'INSERT INTO course_ver2 (code, description) VALUES (%s, %s)'
+                values = (self.code_var.get(), self.desc_var.get(),)
+                self.cursor.execute(query, values)
+                self.db.commit()
 
-        if self.entity == self.student:
-            answer = messagebox.showinfo(
-                "Registration Information",
-                f"COLLEGE:\t{self.college_var.get()}\n\nSTUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}"
-            )
-            query = 'INSERT INTO student_v2 (student_id, first_name, last_name, year_level, gender, college_key, course_key) VALUES (%s, %s, %s, %s, %s, %s, %s)'
-            values = (self.id_var.get(), self.first_var.get(), self.last_var.get(), self.year_var.get(), self.gender_var.get(), self.college_var.get(), self.code_var.get(),)
-            self.cursor.execute(query, values)
-            self.db.commit()
+            if self.entity == self.student:
+                answer = messagebox.showinfo(
+                    "Registration Information",
+                    f"STUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}"
+                )
+                query = 'INSERT INTO student_ver2 (id, first_name, last_name, year_level, gender, course_key) VALUES (%s, %s, %s, %s, %s, %s)'
+                values = (self.id_var.get(), self.first_var.get(), self.last_var.get(), self.year_var.get(), self.gender_var.get(), self.code_var.get(),)
+                self.cursor.execute(query, values)
+                self.db.commit()
 
-        # Updates the list in the treeview after item creation
-        if answer:
-            self.refresh_list(self.entity)
-    
+            # Updates the list in the treeview after item creation
+            if answer:
+                messagebox.showinfo('Registration Successful!', f'{self.entity} successfully registered!')
+                self.refresh_list(self.entity)
+        except:
+            messagebox.showerror('Error', f'An error has occured! Cannot add {self.entity}!')
+
 # R - READ
     def get_info(self, event):
         item = self.treeview.focus()
@@ -381,27 +353,18 @@ class SSIS_v2(tk.Tk):
         self.actions_frame = tk.Frame(self.info_toplevel)
 
         if self.entity == self.course:
-            self.cursor.execute('SELECT * FROM course_v2 WHERE course_code = %s', (info[0],))
+            self.cursor.execute('SELECT * FROM course_ver2 WHERE code = %s', (info[0],))
             info = self.cursor.fetchone()
             self.code_var.set(info[0])
             self.desc_var.set(info[1])
-            self.college_var.set(info[2])
             # WIDGETS
                 # labels
-            self.college_label = tk.Label(self.labels_frame, text='COLLEGE:')
             self.code_label = tk.Label(self.labels_frame, text='COURSE CODE:')
             self.desc_label = tk.Label(self.labels_frame, text='COURSE DESCRIPTION:')
 
                 # entries
-            self.college_combobox = ttk.Combobox(
-                self.entries_frame,
-                textvariable=self.college_var,
-                width=45,
-                state='disable')
-            self.cursor.execute('SELECT college_code FROM college_v2')
-            self.college_combobox['values'] = self.cursor.fetchall()
-            self.college_combobox.bind('<<ComboboxSelected>>', )
-
+            # self.college_combobox['values'] = self.cursor.fetchall()
+            # self.college_combobox.bind('<<ComboboxSelected>>', )
             self.code_entry = tk.Entry(
                 self.entries_frame,
                 textvariable=self.code_var,
@@ -415,12 +378,10 @@ class SSIS_v2(tk.Tk):
 
             # LAYOUT
                 # labels
-            self.college_label.pack(anchor='w', pady=2)
             self.code_label.pack(anchor='w', pady=2)
             self.desc_label.pack(anchor='w', pady=2)
             
                 # entries
-            self.college_combobox.pack(pady=2)
             self.code_entry.pack(pady=2)
             self.desc_entry.pack(pady=2)
 
@@ -428,7 +389,7 @@ class SSIS_v2(tk.Tk):
             self.key = info[0]
                 
         if self.entity == self.student:
-            self.cursor.execute('SELECT * FROM student_v2 WHERE student_id = %s', (info[0],))
+            self.cursor.execute('SELECT * FROM student_ver2 WHERE id = %s', (info[0],))
             info = self.cursor.fetchone()
 
             self.id_var.set(info[0])
@@ -436,11 +397,9 @@ class SSIS_v2(tk.Tk):
             self.last_var.set(info[2])
             self.year_var.set(info[3])
             self.gender_var.set(info[4])
-            self.college_var.set(info[5])
-            self.code_var.set(info[6])
+            self.code_var.set(info[5])
             # WIDGETS
                 # labels
-            self.college_label = tk.Label(self.labels_frame, text='COLLEGE:')
             self.student_id_label = tk.Label(self.labels_frame, text='STUDENT ID:')
             self.first_name_label = tk.Label(self.labels_frame, text='FIRST NAME:')
             self.last_name_label = tk.Label(self.labels_frame, text='LAST NAME:')
@@ -449,17 +408,6 @@ class SSIS_v2(tk.Tk):
             self.gender = tk.Label(self.labels_frame, text='GENDER:')
 
                 # entries
-            self.college_combobox = ttk.Combobox(
-                self.entries_frame,
-                textvariable=self.college_var,
-                width=45,
-                state='disable')
-            self.cursor.execute('SELECT college_code FROM college_v2')
-            self.college_combobox['values'] = self.cursor.fetchall()
-
-            # Bind event to populate course combobox
-            self.college_combobox.bind("<<ComboboxSelected>>", lambda event: self.populate_course_combobox())
-
             self.student_id_entry = tk.Entry(
                 self.entries_frame, 
                 textvariable=self.id_var,
@@ -481,6 +429,8 @@ class SSIS_v2(tk.Tk):
                 textvariable=self.code_var,
                 width=45,
                 state='disable')
+            self.cursor.execute('SELECT code FROM course_ver2')
+            self.course_combobox['values'] = self.cursor.fetchall()
 
             self.year_level_combobox = ttk.Combobox(
                 self.entries_frame, 
@@ -498,7 +448,6 @@ class SSIS_v2(tk.Tk):
             
             # LAYOUT
                 # labels
-            self.college_label.pack(anchor='w', pady=2)
             self.student_id_label.pack(anchor='w', pady=2)
             self.first_name_label.pack(anchor='w', pady=2)
             self.last_name_label.pack(anchor='w', pady=2)
@@ -506,7 +455,6 @@ class SSIS_v2(tk.Tk):
             self.year_level_label.pack(anchor='w', pady=2)
             self.gender.pack(anchor='w', pady=2)
                 # entries
-            self.college_combobox.pack(pady=2)
             self.student_id_entry.pack(pady=2)
             self.first_name_entry.pack(pady=2)
             self.last_name_entry.pack(pady=2)
@@ -514,7 +462,7 @@ class SSIS_v2(tk.Tk):
             self.year_level_combobox.pack(pady=2)
             self.gender_combobox.pack(pady=2)
         
-            self.editables = (self.college_combobox, self.course_combobox, self.year_level_combobox, self.gender_combobox)
+            self.editables = (self.course_combobox, self.year_level_combobox, self.gender_combobox)
             self.key = info[0]
             
             # actions_frame elementS
@@ -535,7 +483,7 @@ class SSIS_v2(tk.Tk):
         self.edit.pack(side='left', expand=True)
         self.update.pack(side='left', expand=True)
         self.delete.pack(side='left', expand=True)
-       
+
 # U -Update
     # Makes necessary entries editable
     def edit_entries(self, editables):
@@ -548,43 +496,58 @@ class SSIS_v2(tk.Tk):
 
     # Updates the item information after editing
     def update_item(self, key):
-        if self.entity == self.course:
-            self.cursor.execute('UPDATE course_v2 SET course_code = %s, course_name = %s WHERE course_code = %s', (self.code_var.get(), self.desc_var.get(), key,))
-            self.db.commit()
-            update = messagebox.showinfo('Update Successful', 'Course Information Updated!')
-        if self.entity == self.student:
-            self.cursor.execute('UPDATE student_v2 SET college_key = %s, course_key = %s, year_level = %s, gender = %s WHERE student_id = %s', (self.college_var.get(), self.code_var.get(), self.year_var.get(), self.gender_var.get(), key,))
-            self.db.commit()
-            update = messagebox.showinfo('Update Successful', 'Student Information Updated!')
+        try:
+            if self.entity == self.course:
+                self.cursor.execute('UPDATE course_ver2 SET code = %s, description = %s WHERE code = %s', (self.code_var.get(), self.desc_var.get(), key,))
+                self.db.commit()
+                update = messagebox.showinfo('Update Successful', 'Course Information Updated!')
+            if self.entity == self.student:
+                self.cursor.execute('UPDATE student_ver2 SET course_key = %s, year_level = %s, gender = %s WHERE id = %s', (self.code_var.get(), self.year_var.get(), self.gender_var.get(), key,))
+                self.db.commit()
+                update = messagebox.showinfo('Update Successful', 'Student Information Updated!')
 
-        if update:
-                self.refresh_list(self.entity)
+            if update:
+                    self.refresh_list(self.entity)
+        except:
+            messagebox.showerror('Error', 'An error has occured.')
 
  # D - DELETE
     def delete_item(self, toplevel):
         confirm = False
         if self.entity == self.course:
-            answer = messagebox.askyesno(
-                'Confirm Deletion',
-                f"Are you sure you want to DELETE THIS {self.entity}?\n\nCOLLEGE:\t\t{self.college_var.get()}\n\nCOURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}")
+            self.cursor.execute('SELECT * FROM student_ver2 WHERE course_key = %s', (self.code_var.get(),))
+            studentsInCourse = self.cursor.fetchall()
+            if len(studentsInCourse) > 0:
+                answer = messagebox.askokcancel("Warning", f"Students are currently enrolled in this {self.entity}.\nDo you still want to DELETE this {self.entity}?\n\n\n(If the course is deleted, all currently enrolled students will not belong to any courses.)")
+                if answer:
+                    confirm = True
+            else:
+                answer = messagebox.askyesno(
+                    'Confirm Deletion',
+                    f"Are you sure you want to DELETE THIS {self.entity}?\n\nCOURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}")
+                if answer:
+                    confirm = True
 
-            if answer:
-                confirm = messagebox.showinfo('DELETION CONFIRMED', f'{self.entity} successfully deleted')
-                self.cursor.execute('DELETE FROM course_v2 WHERE course_code = %s', (self.code_var.get(),))
+            if confirm:
+                messagebox.showinfo('DELETION CONFIRMED', f'{self.entity} successfully deleted')
+                self.cursor.execute('DELETE FROM course_ver2 WHERE code = %s', (self.code_var.get(),))
                 self.db.commit()
 
         if self.entity == self.student:
             answer = messagebox.askyesno(
                 'Confirm Deletion',
-                f'Are you sure you want to DELETE THIS {self.entity}?\n\nCOLLEGE:\t{self.college_var.get()}\n\nSTUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}')
+                f'Are you sure you want to DELETE THIS {self.entity}?\n\nSTUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}')
 
             if answer:
-                confirm = messagebox.showinfo('DELETION CONFIRMED', f'{self.entity} successfully deleted')
-                self.cursor.execute('DELETE FROM student_v2 WHERE student_id = %s', (self.id_var.get(),))
+                messagebox.showinfo('DELETION CONFIRMED', f'{self.entity} successfully deleted')
+                self.cursor.execute('DELETE FROM student_ver2 WHERE id = %s', (self.id_var.get(),))
                 self.db.commit()
+
         # Updates the list in the treeview after deletion
         if confirm:
             toplevel.destroy()
             self.refresh_list(self.entity)
+        else:
+            toplevel.destroy()
 
-SSIS_v2()
+SSIS_ver2()
