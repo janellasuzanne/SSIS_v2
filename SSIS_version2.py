@@ -138,15 +138,15 @@ class SSIS_ver2(tk.Tk):
             self.treeview.heading("Year Level", text="Year Level")
 
             if self.search_var.get() == 'All':
-                self.cursor.execute('SELECT * FROM student_ver2')
+                self.cursor.execute('SELECT * FROM student_ver2 ORDER BY year_level, course_key')
             elif self.search_var.get() == 'ID':
                 self.cursor.execute('SELECT * FROM student_ver2 WHERE id = %s', (self.search_entry_var.get(),))
             elif self.search_var.get() == 'Last Name':
                 self.cursor.execute('SELECT * FROM student_ver2 WHERE  last_name= %s', (self.search_entry_var.get(),))
             elif self.search_var.get() == 'Course':
-                self.cursor.execute('SELECT * FROM student_ver2 WHERE  course_key= %s', (self.search_entry_var.get(),))
+                self.cursor.execute('SELECT * FROM student_ver2 WHERE  course_key= %s ORDER BY year_level, course_key', (self.search_entry_var.get(),))
             else:
-                self.cursor.execute('SELECT * FROM student_ver2')
+                self.cursor.execute('SELECT * FROM student_ver2 ORDER BY year_level, course_key')
             
             students = self.cursor.fetchall()
             for student in students:
@@ -160,11 +160,11 @@ class SSIS_ver2(tk.Tk):
             self.treeview.heading("Desc", text="Course Description")
 
             if self.search_var.get() == 'All':
-                self.cursor.execute('SELECT * FROM course_ver2')
+                self.cursor.execute('SELECT * FROM course_ver2 ORDER BY code')
             elif self.search_var.get() == 'Course Code':
                 self.cursor.execute('SELECT * FROM course_ver2 WHERE  code= %s', (self.search_entry_var.get(),))
             else:
-                self.cursor.execute('SELECT * FROM course_ver2')
+                self.cursor.execute('SELECT * FROM course_ver2 ORDER BY code')
 
             courses = self.cursor.fetchall()
             for course in courses:
@@ -306,24 +306,26 @@ class SSIS_ver2(tk.Tk):
     def submit_item(self):
         try:
             if self.entity == self.course:
-                answer = messagebox.showinfo(
+                answer = messagebox.askokcancel(
                     "Registration Information",
-                    f"COURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}"
+                    f"The following {self.entity} is going to be registered.\n\nCOURSE CODE: \t\t{self.code_var.get()}\n\nCOURSE DESCRIPTION: \t{self.desc_var.get()}"
                 )
-                query = 'INSERT INTO course_ver2 (code, description) VALUES (%s, %s)'
-                values = (self.code_var.get(), self.desc_var.get(),)
-                self.cursor.execute(query, values)
-                self.db.commit()
+                if answer:
+                    query = 'INSERT INTO course_ver2 (code, description) VALUES (%s, %s)'
+                    values = (self.code_var.get(), self.desc_var.get(),)
+                    self.cursor.execute(query, values)
+                    self.db.commit()
 
             if self.entity == self.student:
-                answer = messagebox.showinfo(
+                answer = messagebox.askokcancel(
                     "Registration Information",
-                    f"STUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}"
+                    f"The following {self.entity} is going to be registered.\n\nSTUDENT ID:\t{self.id_var.get()}\n\nNAME: \t\t{self.first_var.get()} {self.last_var.get()}\n\nCOURSE: \t{self.code_var.get()}\n\nYEAR LEVEL: \t{self.year_var.get()}\n\nGENDER: \t{self.gender_var.get()}"
                 )
-                query = 'INSERT INTO student_ver2 (id, first_name, last_name, year_level, gender, course_key) VALUES (%s, %s, %s, %s, %s, %s)'
-                values = (self.id_var.get(), self.first_var.get(), self.last_var.get(), self.year_var.get(), self.gender_var.get(), self.code_var.get(),)
-                self.cursor.execute(query, values)
-                self.db.commit()
+                if answer:
+                    query = 'INSERT INTO student_ver2 (id, first_name, last_name, year_level, gender, course_key) VALUES (%s, %s, %s, %s, %s, %s)'
+                    values = (self.id_var.get(), self.first_var.get(), self.last_var.get(), self.year_var.get(), self.gender_var.get(), self.code_var.get(),)
+                    self.cursor.execute(query, values)
+                    self.db.commit()
 
             # Updates the list in the treeview after item creation
             if answer:
@@ -515,7 +517,6 @@ class SSIS_ver2(tk.Tk):
     def delete_item(self, toplevel):
         confirm = False
         if self.entity == self.course:
-            # Shows extra warning for when there are currently enrolled students in the to-be-deleted course
             self.cursor.execute('SELECT * FROM student_ver2 WHERE course_key = %s', (self.code_var.get(),))
             studentsInCourse = self.cursor.fetchall()
             if len(studentsInCourse) > 0:
