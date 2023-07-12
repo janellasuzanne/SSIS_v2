@@ -12,7 +12,23 @@ class SSIS_ver2(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Simple Student Information System v2')
-        self.geometry('720x480')
+
+        # Get the screen width and height
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+
+        # Set the window dimensions
+        window_width = self.winfo_screenwidth()
+        window_height = self.winfo_screenheight() - 75
+
+        # Calculate the position to center the window
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+
+        # Set the window position
+        self.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        # self.geometry('720x480')
         self.bind('<Control-KeyPress-w>', lambda event: self.quit())
 
         self.db = mysql.connector.connect(
@@ -107,6 +123,9 @@ class SSIS_ver2(tk.Tk):
         # add button
         self.add.pack(fill='x', padx=10, pady=10)
 
+        self.entity = self.student
+        self.refresh_list(self.student)
+
         self.mainloop()
     
     def execute_query(self, connection, query):
@@ -144,7 +163,10 @@ class SSIS_ver2(tk.Tk):
             elif self.search_var.get() == 'Last Name':
                 self.cursor.execute('SELECT * FROM student_ver2 WHERE  last_name= %s', (self.search_entry_var.get(),))
             elif self.search_var.get() == 'Course':
-                self.cursor.execute('SELECT * FROM student_ver2 WHERE  course_key= %s ORDER BY year_level, course_key', (self.search_entry_var.get(),))
+                if self.search_entry_var.get() == 'None':
+                    self.cursor.execute('SELECT * FROM student_ver2 WHERE course_key IS NULL')
+                else:
+                    self.cursor.execute('SELECT * FROM student_ver2 WHERE  course_key= %s ORDER BY year_level, course_key', (self.search_entry_var.get(),))
             else:
                 self.cursor.execute('SELECT * FROM student_ver2 ORDER BY year_level, course_key')
             

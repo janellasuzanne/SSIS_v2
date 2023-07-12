@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS student_ver2 (
     year_level ENUM('1st Year', '2nd Year', '3rd Year', '4th Year'),
     gender ENUM('Not Stated', 'Female', 'Male') DEFAULT 'Not Stated',
     course_key VARCHAR(20),
-    FOREIGN KEY (course_key) REFERENCES course_ver2 (code) ON DELETE SET NULL
+    FOREIGN KEY (course_key)
+        REFERENCES course_ver2 (code)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 """
 
